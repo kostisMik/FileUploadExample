@@ -5,24 +5,26 @@
  */
 package controllers;
 
-import dbHelper.DbConnect;
+import dao.MyFileDao;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
+import model.MyFile;
 
 /**
  *
  * @author Kostis.Mikroulis
  */
-public class uploadServlet extends HttpServlet {
+public class downloadServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -32,31 +34,33 @@ public class uploadServlet extends HttpServlet {
      * @param response servlet response
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
+     * @throws java.sql.SQLException
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException, SQLException {
         response.setContentType("text/html;charset=UTF-8");
+        MyFileDao myFileDao = new MyFileDao();
+        MyFile file = myFileDao.getById(Integer.parseInt(request.getParameter("id")));
         
-        //Part CLASS gets the file to read from the SERVLET with the name given to the file(index.html)
-        Part p = request.getPart("myFile");
+        InputStream inputStream = null;
+        inputStream = file.getThefileasBlob().getBinaryStream();
         
-        //WE assign a string to get the name(user doesn't give it we might set it ourselves or someone other.)
-        String filename = p.getSubmittedFileName();
-        DbConnect dbc = new DbConnect();
-        Connection conn = dbc.getConnection();
+        ServletContext context = getServletContext();
+        String mimeType = context.getMimeType(file.getFilename());
         
-        String sql = "INSERT INTO uploadstore VALUES(?,?,?)";
-        try{
-            
-            PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, 1);
-            preparedStatement.setString(2, filename);
-            
-            preparedStatement.setBinaryStream(3, p.getInputStream());
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            Logger.getLogger(uploadServlet.class.getName()).log(Level.SEVERE, null, ex);
+        if (mimeType == null) {
+            mimeType = "application/octet-stream";
         }
+        OutputStream outStream = response.getOutputStream();
+        response.setContentType(mimeType);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            //send responce to browser
+            outStream.write(buffer, 0, bytesRead);
+        }
+        inputStream.close();
+        outStream.close();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -71,7 +75,11 @@ public class uploadServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        try {
+            processRequest(request, response);
+        } catch (SQLException ex) {
+            Logger.getLogger(downloadServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -85,7 +93,11 @@ public class uploadServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        try {
+            processRequest(request, response);
+        } catch (SQLException ex) {
+            Logger.getLogger(downloadServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**

@@ -9,9 +9,17 @@
             <file-size-threshold>5242880</file-size-threshold>
         </multipart-config>
     </servlet>
+    <servlet>
+        <servlet-name>downloadServlet</servlet-name>
+        <servlet-class>controllers.downloadServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>uploadServlet</servlet-name>
         <url-pattern>/uploadServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>downloadServlet</servlet-name>
+        <url-pattern>/download</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
