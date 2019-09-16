@@ -12,10 +12,14 @@ and open the template in the editor.
     </head>
     <body style="background-color: tomato; color: midnightblue">
         <form action="uploadServlet" method="post" 
-            enctype="multipart/form-data"
-        >
+              enctype="multipart/form-data"
+              >
             <input type="file" name="myFile"><br><br>
             <input type="submit" name="submit"><br>
         </form>
+
+        <!-- Give a path of the Servlet from which the link will read -->
+        <!-- Download attribute means browser will always ask before downloading file-->
+        <a href="download?id=1" download>Press to Download!</a>
     </body>
 </html>
